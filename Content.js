@@ -63,10 +63,10 @@ function createPopupImage(filename, options = {}) {
 
   Object.assign(img.style, {
     position: "fixed",
-    left: options.left || "20px",
+    right: options.right || "20px",
     top: options.top || "20px",
-    width: options.width || "100px",
-    height: "auto",
+    width: options.width || "454px",
+    height: options.height || "316px",
     opacity: "0",
     borderRadius: "8px",
     zIndex: options.zIndex || "9999",
@@ -75,17 +75,30 @@ function createPopupImage(filename, options = {}) {
   });
 
   document.body.appendChild(img);
-  requestAnimationFrame(() => img.style.opacity = options.opacity || "0.8");
+  requestAnimationFrame(() => (img.style.opacity = options.opacity || "0.8"));
   return img;
+}
+
+// --- Scale dimensions between small and large ---
+function getScaledDimensions(index, total) {
+  const minW = 454, minH = 316;
+  const maxW = 1792, maxH = 1065;
+  const progress = index / (total - 1);
+  const width = minW + (maxW - minW) * progress;
+  const height = minH + (maxH - minH) * progress;
+  return { width: width.toFixed(0) + "px", height: height.toFixed(0) + "px" };
 }
 
 // --- Show main image ---
 function updateDisplayedImage() {
   const chosenImage = baseImages[currentImageIndex];
+  const { width, height } = getScaledDimensions(currentImageIndex, baseImages.length);
 
   if (!activeImageElement) {
-    activeImageElement = createPopupImage(chosenImage, { width: "200px" });
+    activeImageElement = createPopupImage(chosenImage, { width, height });
   } else {
+    activeImageElement.style.width = width;
+    activeImageElement.style.height = height;
     activeImageElement.src = chrome.runtime.getURL(chosenImage);
   }
 
@@ -103,21 +116,24 @@ function showTemporaryTBImage(index) {
     activeTBImage = null;
   }
 
+  const { width, height } = getScaledDimensions(index, baseImages.length);
   activeTBImage = createPopupImage(tbFile, {
-    width: "133px", // proportional to 596x436 vs 447x316
+    width,
+    height,
     zIndex: "10000",
     opacity: 0.9
   });
 
   // Fade out after 5 seconds
   setTimeout(() => {
-    activeTBImage.style.opacity = "0";
-    setTimeout(() => {
-      if (activeTBImage) {
-        activeTBImage.remove();
+    if (activeTBImage) {
+      activeTBImage.style.transition = "opacity 0.6s ease";
+      activeTBImage.style.opacity = "0";
+      setTimeout(() => {
+        activeTBImage?.remove();
         activeTBImage = null;
-      }
-    }, 600);
+      }, 600);
+    }
   }, 5000);
 }
 
@@ -127,14 +143,15 @@ if (isShoppingSite()) {
   currentImageIndex = isNaN(savedIndex) ? 0 : Math.min(savedIndex, baseImages.length - 1);
 
   const initialTitle = getItemTitle();
-  activeImageElement = createPopupImage(baseImages[currentImageIndex], { width: "100px" });
+  const { width, height } = getScaledDimensions(currentImageIndex, baseImages.length);
+  activeImageElement = createPopupImage(baseImages[currentImageIndex], { width, height });
   console.log("Restored image:", baseImages[currentImageIndex]);
 }
 
 // --- Click handling ---
 document.addEventListener("click", (e) => {
   if (!isShoppingSite()) return;
-   //solution for detecting closest button is from chatgpt, befoe i was having issues when div objects were layered
+
   const button = e.target.closest("button, a");
   if (!button) return;
 
@@ -144,7 +161,7 @@ document.addEventListener("click", (e) => {
 
   const addKeywords = ["add to cart", "add to bag", "buy now", "purchase", "add", "shop now", "order now", "+"];
   const removeKeywords = ["remove", "minus", "-"];
-   //format for how to detect aria text is from chatGPT. Initially, I was looking it up based on content of the button text
+
   const isAdd = addKeywords.some(word => text.includes(word) || aria.includes(word) || classes.includes(word));
   const isRemove = removeKeywords.some(word => text.includes(word) || aria.includes(word) || classes.includes(word));
 
@@ -156,3 +173,4 @@ document.addEventListener("click", (e) => {
     updateDisplayedImage();
   }
 });
+
