@@ -29,6 +29,7 @@ const knownDomains = [
   "aboutyou.com", "asos.de", "asos.fr", "asos.com.au","clarks.com","sezane.com","prettylittlething.us","colourpop.com","anthropologie.com","jellycat.com"
 ];
 
+
 function isShoppingSite() {
   return knownDomains.some(domain => location.hostname.includes(domain));
 }
@@ -42,13 +43,13 @@ function getItemTitle() {
 
 // --- Image sets ---
 const baseImages = [
-  "ems0.png","ems1.png","ems2.png","ems3.png","ems4.png",
-  "ems5.png","ems6.png","ems7.png","ems8.png","ems9.png","ems10.png"
+  "ems0.png", "ems1.png", "ems2.png", "ems3.png", "ems4.png",
+  "ems5.png", "ems6.png", "ems7.png", "ems8.png", "ems9.png", "ems10.png"
 ];
 const tbImages = [
-  "ems1_tb.png","ems2_tb.png","ems3_tb.png","ems4_tb.png",
-  "ems5_tb.png","ems6_tb.png","ems7_tb.png","ems8_tb.png",
-  "ems9_tb.png","ems10_tb.png"
+  "ems1_b.png", "ems2_b.png", "ems3_b.png", "ems4_b.png",
+  "ems5_b.png", "ems6_b.png", "ems7_b.png", "ems8_b.png",
+  "ems9_b.png", "ems10_b.png"
 ];
 
 let currentImageIndex = 0;
@@ -70,7 +71,7 @@ function createPopupImage(filename, options = {}) {
     borderRadius: "8px",
     zIndex: options.zIndex || "9999",
     pointerEvents: "none",
-    transition: "opacity 0.6s ease, width 0.6s ease"
+    transition: "opacity 0.6s ease"
   });
 
   document.body.appendChild(img);
@@ -78,25 +79,15 @@ function createPopupImage(filename, options = {}) {
   return img;
 }
 
-// --- Scale width between 100px and 1792px proportionally ---
-function getScaledWidth(index, total) {
-  const minW = 100;
-  const maxW = 1792;
-  const progress = index / (total - 1);
-  const width = minW + (maxW - minW) * progress;
-  return width.toFixed(0) + "px";
-}
-
 // --- Show main image ---
 function updateDisplayedImage() {
   const chosenImage = baseImages[currentImageIndex];
-  const width = getScaledWidth(currentImageIndex, baseImages.length);
 
   if (!activeImageElement) {
-    activeImageElement = createPopupImage(chosenImage, { width });
+    activeImageElement = createPopupImage(chosenImage, { width: "100px" });
   } else {
-    activeImageElement.style.width = width;
     activeImageElement.src = chrome.runtime.getURL(chosenImage);
+    activeImageElement.style.width = "100px";
   }
 
   localStorage.setItem("currentImageIndex", currentImageIndex);
@@ -113,9 +104,11 @@ function showTemporaryTBImage(index) {
     activeTBImage = null;
   }
 
-  const width = getScaledWidth(index, baseImages.length);
+  // proportional ratio: (1792 / 454)
+  const ratio = 1792 / 454; // ≈ 3.948
+  const tbWidth = 100 * ratio; // proportional to base image width
   activeTBImage = createPopupImage(tbFile, {
-    width,
+    width: tbWidth + "px",
     zIndex: "10000",
     opacity: 0.9
   });
@@ -137,8 +130,8 @@ if (isShoppingSite()) {
   const savedIndex = parseInt(localStorage.getItem("currentImageIndex"), 10);
   currentImageIndex = isNaN(savedIndex) ? 0 : Math.min(savedIndex, baseImages.length - 1);
 
-  const width = getScaledWidth(currentImageIndex, baseImages.length);
-  activeImageElement = createPopupImage(baseImages[currentImageIndex], { width });
+  const initialTitle = getItemTitle();
+  activeImageElement = createPopupImage(baseImages[currentImageIndex], { width: "100px" });
   console.log("Restored image:", baseImages[currentImageIndex]);
 }
 
@@ -167,4 +160,3 @@ document.addEventListener("click", (e) => {
     updateDisplayedImage();
   }
 });
-
