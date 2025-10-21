@@ -34,12 +34,6 @@ function isShoppingSite() {
   return knownDomains.some(domain => location.hostname.includes(domain));
 }
 
-function getItemTitle() {
-  const titleEl = document.querySelector(
-    "h1[data-testid='product-title'], h1[data-test='product-title'], h1#pdp-product-title-id, h1.pdp-product-title"
-  );
-  return titleEl ? titleEl.textContent.trim() : document.title;
-}
 
 // --- Image sets ---
 const baseImages = [
@@ -131,7 +125,6 @@ if (isShoppingSite()) {
   const savedIndex = parseInt(localStorage.getItem("currentImageIndex"), 10);
   currentImageIndex = isNaN(savedIndex) ? 0 : Math.min(savedIndex, baseImages.length - 1);
 
-  const initialTitle = getItemTitle();
   activeImageElement = createPopupImage(baseImages[currentImageIndex], { width: "100px" });
   console.log("Restored image:", baseImages[currentImageIndex]);
 }
