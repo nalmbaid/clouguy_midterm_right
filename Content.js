@@ -29,7 +29,6 @@ const knownDomains = [
   "aboutyou.com", "asos.de", "asos.fr", "asos.com.au","clarks.com","sezane.com","prettylittlething.us","colourpop.com","anthropologie.com","jellycat.com"
 ];
 
-
 function isShoppingSite() {
   return knownDomains.some(domain => location.hostname.includes(domain));
 }
@@ -65,13 +64,13 @@ function createPopupImage(filename, options = {}) {
     position: "fixed",
     right: options.right || "20px",
     top: options.top || "20px",
-    width: options.width || "454px",
-    height: options.height || "316px",
+    width: options.width || "100px",
+    height: "auto",
     opacity: "0",
     borderRadius: "8px",
     zIndex: options.zIndex || "9999",
     pointerEvents: "none",
-    transition: "opacity 0.6s ease"
+    transition: "opacity 0.6s ease, width 0.6s ease"
   });
 
   document.body.appendChild(img);
@@ -79,26 +78,24 @@ function createPopupImage(filename, options = {}) {
   return img;
 }
 
-// --- Scale dimensions between small and large ---
-function getScaledDimensions(index, total) {
-  const minW = 454, minH = 316;
-  const maxW = 1792, maxH = 1065;
+// --- Scale width between 100px and 1792px proportionally ---
+function getScaledWidth(index, total) {
+  const minW = 100;
+  const maxW = 1792;
   const progress = index / (total - 1);
   const width = minW + (maxW - minW) * progress;
-  const height = minH + (maxH - minH) * progress;
-  return { width: width.toFixed(0) + "px", height: height.toFixed(0) + "px" };
+  return width.toFixed(0) + "px";
 }
 
 // --- Show main image ---
 function updateDisplayedImage() {
   const chosenImage = baseImages[currentImageIndex];
-  const { width, height } = getScaledDimensions(currentImageIndex, baseImages.length);
+  const width = getScaledWidth(currentImageIndex, baseImages.length);
 
   if (!activeImageElement) {
-    activeImageElement = createPopupImage(chosenImage, { width, height });
+    activeImageElement = createPopupImage(chosenImage, { width });
   } else {
     activeImageElement.style.width = width;
-    activeImageElement.style.height = height;
     activeImageElement.src = chrome.runtime.getURL(chosenImage);
   }
 
@@ -116,10 +113,9 @@ function showTemporaryTBImage(index) {
     activeTBImage = null;
   }
 
-  const { width, height } = getScaledDimensions(index, baseImages.length);
+  const width = getScaledWidth(index, baseImages.length);
   activeTBImage = createPopupImage(tbFile, {
     width,
-    height,
     zIndex: "10000",
     opacity: 0.9
   });
@@ -127,7 +123,6 @@ function showTemporaryTBImage(index) {
   // Fade out after 5 seconds
   setTimeout(() => {
     if (activeTBImage) {
-      activeTBImage.style.transition = "opacity 0.6s ease";
       activeTBImage.style.opacity = "0";
       setTimeout(() => {
         activeTBImage?.remove();
@@ -142,9 +137,8 @@ if (isShoppingSite()) {
   const savedIndex = parseInt(localStorage.getItem("currentImageIndex"), 10);
   currentImageIndex = isNaN(savedIndex) ? 0 : Math.min(savedIndex, baseImages.length - 1);
 
-  const initialTitle = getItemTitle();
-  const { width, height } = getScaledDimensions(currentImageIndex, baseImages.length);
-  activeImageElement = createPopupImage(baseImages[currentImageIndex], { width, height });
+  const width = getScaledWidth(currentImageIndex, baseImages.length);
+  activeImageElement = createPopupImage(baseImages[currentImageIndex], { width });
   console.log("Restored image:", baseImages[currentImageIndex]);
 }
 
