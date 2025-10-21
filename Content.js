@@ -105,6 +105,7 @@ function showTemporaryTBImage(index) {
   }
 
   // proportional ratio: (1792 / 454)
+   // chatgpt helped with ratio concept
   const ratio = 1792 / 454; // ≈ 3.948
   const tbWidth = 100 * ratio; // proportional to base image width
   activeTBImage = createPopupImage(tbFile, {
@@ -146,6 +147,7 @@ document.addEventListener("click", (e) => {
   const aria = (button.getAttribute("aria-label") || "").toLowerCase();
   const classes = (button.className || "").toLowerCase();
 
+   // chatgpt helped with aria labeling options
   const addKeywords = ["add to cart", "add to bag", "buy now", "purchase", "add", "shop now", "order now", "+"];
   const removeKeywords = ["remove", "minus", "-"];
 
